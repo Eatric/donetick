@@ -1,0 +1,9 @@
+.git
+.github
+data
+donetick
+frontend/dist
+frontend-src/.git
+frontend-src/dist
+frontend-src/node_modules
+**/*.log
