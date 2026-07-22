@@ -274,6 +274,15 @@ func NewConfig() *Config {
 }
 
 func configEnvironmentOverrides(config *Config) {
+	if value := os.Getenv("DONETICK_JWT_SECRET"); value != "" {
+		config.Jwt.Secret = value
+	}
+	if value := os.Getenv("DONETICK_OAUTH2_CLIENT_ID"); value != "" {
+		config.OAuth2Config.ClientID = value
+	}
+	if value := os.Getenv("DONETICK_OAUTH2_CLIENT_SECRET"); value != "" {
+		config.OAuth2Config.ClientSecret = value
+	}
 	if os.Getenv("DONETICK_TELEGRAM_TOKEN") != "" {
 		config.Telegram.Token = os.Getenv("DONETICK_TELEGRAM_TOKEN")
 	}
