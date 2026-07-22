@@ -1803,6 +1803,17 @@ func (h *Handler) completeChore(c *gin.Context) {
 		})
 		return
 	}
+	if chore.SubTasks != nil {
+		for _, subtask := range *chore.SubTasks {
+			if subtask.CompletedAt == nil {
+				c.JSON(http.StatusConflict, gin.H{
+					"code":  "incomplete_subtasks",
+					"error": "Complete all subtasks before completing the chore",
+				})
+				return
+			}
+		}
+	}
 
 	// user need to be assigned to the chore to complete it
 	circleUsers, err := h.circleRepo.GetCircleUsers(c, actualUser.CircleID)
@@ -2515,7 +2526,23 @@ func (h *Handler) UpdateSubtaskCompletedAt(c *gin.Context) {
 	if req.CompletedAt != nil {
 		completedAt = req.CompletedAt
 	}
-	err = h.stRepo.UpdateSubTaskStatus(c, effectiveUser.ID, req.ID, completedAt)
+	if completedAt != nil {
+		hasIncompleteChildren, err := h.stRepo.HasIncompleteChildren(c, choreID, req.ID)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": "Error checking child subtasks",
+			})
+			return
+		}
+		if hasIncompleteChildren {
+			c.JSON(http.StatusConflict, gin.H{
+				"code":  "incomplete_subtasks",
+				"error": "Complete all child subtasks before completing the parent subtask",
+			})
+			return
+		}
+	}
+	err = h.stRepo.UpdateSubTaskStatus(c, effectiveUser.ID, choreID, req.ID, completedAt)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Error getting subtask",
